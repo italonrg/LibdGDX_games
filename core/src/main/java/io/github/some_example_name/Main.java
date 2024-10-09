@@ -7,14 +7,23 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.TimeUtils;
+import java.sql.Time;
+import java.util.Iterator;
+
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
-    private Texture image,tNave,tMissile;// isso cria as imagens que serão convertidas em sprites;
-    private Sprite nave,missile;// isso cria o spite;
+    private Texture image,tNave,tMissile,tEnemy;// isso cria as imagens que serão convertidas em sprites;
+    private Sprite nave,missile;// isso cria o sprite;
     private float posX , posY ,velocity,xMissile,yMissile;// estas variaveis servem para controlar o movimento da nave;
     private boolean attack;//abstração para controle do tiro da nave;
+    private Array<Rectangle> enemies;//Os inigos serãm "alocados" dentro de um Array e "dentro"de triangulos;
+    private long lastEnemyTime;
 
 
     @Override
@@ -32,19 +41,30 @@ public class Main extends ApplicationAdapter {
         missile = new Sprite(tMissile);
         xMissile = posX;
         yMissile = posY;
+
+        tEnemy = new Texture("enemy.png");
+        enemies = new Array<Rectangle>();
+        lastEnemyTime = 0;
     }
 
     @Override
     public void render() {
         this.moveNave();
         this.moveMissile();
+        this.moveEnemy();
+
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
         batch.begin();
         batch.draw(image, 140, 210);
+
         if (attack){
             batch.draw(missile ,xMissile + nave.getWidth() /2,yMissile + nave.getHeight() /2 - 12);
         }
+
         batch.draw(nave ,posX,posY);
+        for (Rectangle enemy : enemies){
+            batch.draw(tEnemy,enemy.x, enemy.y);
+        }
         batch.end();
     }
 
@@ -96,5 +116,25 @@ public class Main extends ApplicationAdapter {
             yMissile = posY;
         }
 
+    }
+    private void spanwEnemyes(){
+        Rectangle enemy = new Rectangle(Gdx.graphics.getWidth(), MathUtils.random(0,Gdx.graphics.getHeight() - tEnemy.getHeight()),tEnemy.getWidth(),tEnemy.getHeight());
+        enemies.add(enemy);//nisso aqui eu coloquei o inimigo criado acima, dentro do Array vazio;
+        lastEnemyTime = TimeUtils.nanoTime();
+    }
+    private void moveEnemy (){
+
+        if (TimeUtils.nanoTime() - lastEnemyTime > 100000000 && enemies.size < 5){
+            this.spanwEnemyes();
+        }
+       // this.spanwEnemyes();
+        for (Iterator<Rectangle> iter = enemies.iterator(); iter.hasNext();){
+            Rectangle enemy = iter.next();
+            //enemy.x -= 3;
+            enemy.x -= 400 * Gdx.graphics.getDeltaTime();
+            if (enemy.x + tEnemy.getWidth() < 0){
+                iter.remove();
+            }
+        }
     }
 }
