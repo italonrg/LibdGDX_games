@@ -11,16 +11,19 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
+
 import java.sql.Time;
 import java.util.Iterator;
 
 
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
+/**
+ * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
+ */
 public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
-    private Texture image,tNave,tMissile,tEnemy;// isso cria as imagens que serão convertidas em sprites;
-    private Sprite nave,missile;// isso cria o sprite;
-    private float posX , posY ,velocity,xMissile,yMissile;// estas variaveis servem para controlar o movimento da nave;
+    private Texture image, tNave, tMissile, tEnemy;// isso cria as imagens que serão convertidas em sprites;
+    private Sprite nave, missile;// isso cria o sprite;
+    private float posX, posY, velocity, xMissile, yMissile;// estas variaveis servem para controlar o movimento da nave;
     private boolean attack;//abstração para controle do tiro da nave;
     private Array<Rectangle> enemies;//Os inigos serãm "alocados" dentro de um Array e "dentro"de triangulos;
     private long lastEnemyTime;
@@ -37,7 +40,7 @@ public class Main extends ApplicationAdapter {
         velocity = 10;
         attack = false;
 
-        nave= new Sprite(tNave);
+        nave = new Sprite(tNave);
         missile = new Sprite(tMissile);
         xMissile = posX;
         yMissile = posY;
@@ -57,13 +60,13 @@ public class Main extends ApplicationAdapter {
         batch.begin();
         batch.draw(image, 140, 210);
 
-        if (attack){
-            batch.draw(missile ,xMissile + nave.getWidth() /2,yMissile + nave.getHeight() /2 - 12);
+        if (attack) {
+            batch.draw(missile, xMissile + nave.getWidth() / 2, yMissile + nave.getHeight() / 2 - 12);
         }
 
-        batch.draw(nave ,posX,posY);
-        for (Rectangle enemy : enemies){
-            batch.draw(tEnemy,enemy.x, enemy.y);
+        batch.draw(nave, posX, posY);
+        for (Rectangle enemy : enemies) {
+            batch.draw(tEnemy, enemy.x, enemy.y);
         }
         batch.end();
     }
@@ -75,39 +78,40 @@ public class Main extends ApplicationAdapter {
         tNave.dispose();
     }
 
-    private void moveNave(){
+    private void moveNave() {
 
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)){
-            if (posX < Gdx.graphics.getWidth() - nave.getWidth() ){
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            if (posX < Gdx.graphics.getWidth() - nave.getWidth()) {
                 posX += velocity;
             }
 
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)){
-            if (posX > 0){
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            if (posX > 0) {
                 posX -= velocity;
             }
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.UP)){
-            if (posY < Gdx.graphics.getHeight() - nave.getHeight()){
+        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+            if (posY < Gdx.graphics.getHeight() - nave.getHeight()) {
                 posY += velocity;
             }
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)){
-            if (posY > 0){
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+            if (posY > 0) {
                 posY -= velocity;
             }
         }
     }
-    private void moveMissile(){
-        if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && !attack){
+
+    private void moveMissile() {
+        if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && !attack) {
             attack = true; //logica: se espaço for pressonado a variavel attack recebe true e o missil tem o incremento no valor, se não ele fica onde está;
             yMissile = posY;
         }
-        if (attack){
-            if (xMissile < Gdx.graphics.getWidth()){
+        if (attack) {
+            if (xMissile < Gdx.graphics.getWidth()) {
                 xMissile += 30;
-            }else {
+            } else {
                 xMissile = posX;
                 attack = false;
             }
@@ -117,24 +121,37 @@ public class Main extends ApplicationAdapter {
         }
 
     }
-    private void spanwEnemyes(){
-        Rectangle enemy = new Rectangle(Gdx.graphics.getWidth(), MathUtils.random(0,Gdx.graphics.getHeight() - tEnemy.getHeight()),tEnemy.getWidth(),tEnemy.getHeight());
+
+    private void spanwEnemyes() {
+        Rectangle enemy = new Rectangle(Gdx.graphics.getWidth(), MathUtils.random(0, Gdx.graphics.getHeight() - tEnemy.getHeight()), tEnemy.getWidth(), tEnemy.getHeight());
         enemies.add(enemy);//nisso aqui eu coloquei o inimigo criado acima, dentro do Array vazio;
         lastEnemyTime = TimeUtils.nanoTime();
     }
-    private void moveEnemy (){
 
-        if (TimeUtils.nanoTime() - lastEnemyTime > 100000000 && enemies.size < 5){
+    private void moveEnemy() {
+
+        if (TimeUtils.nanoTime() - lastEnemyTime > 100000000 && enemies.size < 5) {
             this.spanwEnemyes();
         }
-       // this.spanwEnemyes();
-        for (Iterator<Rectangle> iter = enemies.iterator(); iter.hasNext();){
+        for (Iterator<Rectangle> iter = enemies.iterator(); iter.hasNext(); ) {
             Rectangle enemy = iter.next();
-            //enemy.x -= 3;
             enemy.x -= 400 * Gdx.graphics.getDeltaTime();
-            if (enemy.x + tEnemy.getWidth() < 0){
+
+            if (collide(enemy.x, enemy.y, enemy.width, enemy.height, xMissile, yMissile, missile.getWidth(), missile.getHeight())){
+                iter.remove();
+            }
+
+            if (enemy.x + tEnemy.getWidth() < 0) {
                 iter.remove();
             }
         }
+    }
+
+    private boolean collide(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2 ) {
+        if (x1 + w1 > x2 && x1 < x2 + w2 && y1 + h1 > y2 && y1 < y2 + h2) {
+            return true;
+        }
+        return false;
+
     }
 }
