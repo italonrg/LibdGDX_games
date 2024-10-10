@@ -11,6 +11,10 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.Color;
+
 
 import java.sql.Time;
 import java.util.Iterator;
@@ -27,6 +31,10 @@ public class Main extends ApplicationAdapter {
     private boolean attack;//abstração para controle do tiro da nave;
     private Array<Rectangle> enemies;//Os inigos serãm "alocados" dentro de um Array e "dentro"de triangulos;
     private long lastEnemyTime;
+    private int score;// pontuação do jogo;
+    private FreeTypeFontGenerator generator;
+    private  FreeTypeFontGenerator.FreeTypeFontParameter parameter;
+
 
 
     @Override
@@ -48,6 +56,7 @@ public class Main extends ApplicationAdapter {
         tEnemy = new Texture("enemy.png");
         enemies = new Array<Rectangle>();
         lastEnemyTime = 0;
+        score = 0;
     }
 
     @Override
@@ -110,7 +119,7 @@ public class Main extends ApplicationAdapter {
         }
         if (attack) {
             if (xMissile < Gdx.graphics.getWidth()) {
-                xMissile += 30;
+                xMissile += 30;// isso aqui diz que : quando attack fo true  a posição do eixo Y do xMissile recebe um incremento nisso o missil se move;
             } else {
                 xMissile = posX;
                 attack = false;
@@ -135,10 +144,14 @@ public class Main extends ApplicationAdapter {
         }
         for (Iterator<Rectangle> iter = enemies.iterator(); iter.hasNext(); ) {
             Rectangle enemy = iter.next();
-            enemy.x -= 400 * Gdx.graphics.getDeltaTime();
+            enemy.x -= 400 * Gdx.graphics.getDeltaTime();//isso controla a aparição dos inimigos;
 
             if (collide(enemy.x, enemy.y, enemy.width, enemy.height, xMissile, yMissile, missile.getWidth(), missile.getHeight())){
+                System.out.println("Score: " + ++score);
+                attack = false;
                 iter.remove();
+            }else if (collide(enemy.x, enemy.y, enemy.width, enemy.height,posX, posY, nave.getWidth(),nave.getHeight())){
+                iter.remove();// iter, aqui e o iterador que contem os retangulos que são os nossos inimigos;
             }
 
             if (enemy.x + tEnemy.getWidth() < 0) {
