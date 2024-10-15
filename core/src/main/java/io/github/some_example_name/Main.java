@@ -2,6 +2,7 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -16,8 +17,10 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.Color;
 
 
+import java.awt.*;
 import java.sql.Time;
 import java.util.Iterator;
+import java.util.Random;
 
 
 /**
@@ -34,13 +37,14 @@ public class Main extends ApplicationAdapter {
     private int score;// pontuação do jogo;
     private FreeTypeFontGenerator generator;
     private  FreeTypeFontGenerator.FreeTypeFontParameter parameter;
+    private BitmapFont bitmapFont;
 
 
 
     @Override
     public void create() {
         batch = new SpriteBatch();
-        image = new Texture("bg.png");//fundo
+        image = new Texture("bg01.jpg");//fundo
         tNave = new Texture("spaceship.png");//nave
         tMissile = new Texture("missile.png");// missil
         posX = 255;
@@ -57,6 +61,18 @@ public class Main extends ApplicationAdapter {
         enemies = new Array<Rectangle>();
         lastEnemyTime = 0;
         score = 0;
+
+        //está e a forma de usar fontes customizadas no projeto;
+        generator = new FreeTypeFontGenerator(Gdx.files.internal("font.ttf"));
+        parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+
+        parameter.size = 30;
+        parameter.borderWidth = 1;
+        parameter.color = Color.CORAL;
+        parameter.borderColor = Color.BLUE;
+        bitmapFont = generator.generateFont(parameter);
+
+
     }
 
     @Override
@@ -65,9 +81,16 @@ public class Main extends ApplicationAdapter {
         this.moveMissile();
         this.moveEnemy();
 
+        int larguraTela = Gdx.graphics.getWidth();
+        int alturaTela = Gdx.graphics.getHeight();
+        int imgageLargura = image.getWidth();
+        int imageAltura = image.getHeight();
+        float x = (larguraTela - imgageLargura ) /2 ;
+        float y = (alturaTela - imageAltura ) /2 ;
+
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
         batch.begin();
-        batch.draw(image, 140, 210);
+        batch.draw(image, x , y );
 
         if (attack) {
             batch.draw(missile, xMissile + nave.getWidth() / 2, yMissile + nave.getHeight() / 2 - 12);
@@ -77,6 +100,8 @@ public class Main extends ApplicationAdapter {
         for (Rectangle enemy : enemies) {
             batch.draw(tEnemy, enemy.x, enemy.y);
         }
+        bitmapFont.draw(batch,"Score : " + score, 20, Gdx.graphics.getHeight() - 20);// nisso aqui do Gdx.graphics eu estou pegando a altura e diminuindo por 20;
+
         batch.end();
     }
 
@@ -137,9 +162,9 @@ public class Main extends ApplicationAdapter {
         lastEnemyTime = TimeUtils.nanoTime();
     }
 
-    private void moveEnemy() {
+    private void moveEnemy() {//controla o movimento/aparição dos inimigos e a logica de pontuação;
 
-        if (TimeUtils.nanoTime() - lastEnemyTime > 100000000 && enemies.size < 5) {
+        if (TimeUtils.nanoTime() - lastEnemyTime > 100000000 && enemies.size < Math.random()/2) {
             this.spanwEnemyes();
         }
         for (Iterator<Rectangle> iter = enemies.iterator(); iter.hasNext(); ) {
@@ -147,7 +172,7 @@ public class Main extends ApplicationAdapter {
             enemy.x -= 400 * Gdx.graphics.getDeltaTime();//isso controla a aparição dos inimigos;
 
             if (collide(enemy.x, enemy.y, enemy.width, enemy.height, xMissile, yMissile, missile.getWidth(), missile.getHeight())){
-                System.out.println("Score: " + ++score);
+             ++score;
                 attack = false;
                 iter.remove();
             }else if (collide(enemy.x, enemy.y, enemy.width, enemy.height,posX, posY, nave.getWidth(),nave.getHeight())){
@@ -167,4 +192,5 @@ public class Main extends ApplicationAdapter {
         return false;
 
     }
+
 }
