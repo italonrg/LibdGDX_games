@@ -31,10 +31,10 @@ public class Main extends ApplicationAdapter {
     private Texture image, tNave, tMissile, tEnemy;// isso cria as imagens que serão convertidas em sprites;
     private Sprite nave, missile;// isso cria o sprite;
     private float posX, posY, velocity, xMissile, yMissile;// estas variaveis servem para controlar o movimento da nave;
-    private boolean attack;//abstração para controle do tiro da nave;
+    private boolean attack, gameOver;//abstração para controle do tiro da nave;
     private Array<Rectangle> enemies;//Os inigos serãm "alocados" dentro de um Array e "dentro"de triangulos;
     private long lastEnemyTime;
-    private int score;// pontuação do jogo;
+    private int score, power, numEnemies;// pontuação do jogo & a vida da nave;
     private FreeTypeFontGenerator generator;
     private  FreeTypeFontGenerator.FreeTypeFontParameter parameter;
     private BitmapFont bitmapFont;
@@ -61,6 +61,9 @@ public class Main extends ApplicationAdapter {
         enemies = new Array<Rectangle>();
         lastEnemyTime = 0;
         score = 0;
+        power = 4;
+        numEnemies = 999999999;
+        gameOver = false;
 
         //está e a forma de usar fontes customizadas no projeto;
         generator = new FreeTypeFontGenerator(Gdx.files.internal("font.ttf"));
@@ -92,15 +95,31 @@ public class Main extends ApplicationAdapter {
         batch.begin();
         batch.draw(image, x , y );
 
-        if (attack) {
-            batch.draw(missile, xMissile + nave.getWidth() / 2, yMissile + nave.getHeight() / 2 - 12);
+        if (!gameOver){// isso e a abstração de gameover sou seja o jogo deve parar ao a pontuação chegar a 0;
+            if (attack) {
+                batch.draw(missile, xMissile + nave.getWidth() / 2, yMissile + nave.getHeight() / 2 - 12);
+            }
+
+            batch.draw(nave, posX, posY);
+            for (Rectangle enemy : enemies) {
+                batch.draw(tEnemy, enemy.x, enemy.y);
+            }
+            bitmapFont.draw(batch,"Score : " + score, 20, Gdx.graphics.getHeight() - 20);// nisso aqui do Gdx.graphics eu estou pegando a altura e diminuindo por 20;
+            bitmapFont.draw(batch,"POWER : " + power, Gdx.graphics.getWidth() -150, Gdx.graphics.getHeight() - 20);// Desenhando o power;
+        }else {
+            bitmapFont.draw(batch,"Score : " + score, 20, Gdx.graphics.getHeight() - 20);// nisso aqui do Gdx.graphics eu estou pegando a altura e diminuindo por 20;
+            bitmapFont.draw(batch,"GAME OVER " + power, Gdx.graphics.getWidth() -150, Gdx.graphics.getHeight() - 20);// Desenhando o power;
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.ENTER)){
+            //isso e a logica de recomeço no caso tem que zerar os valores pra que o jogo recomeçe;
+            score = 0;
+            power= 3;
+            posX = 0;
+            posY = 0;
+            gameOver = false;
         }
 
-        batch.draw(nave, posX, posY);
-        for (Rectangle enemy : enemies) {
-            batch.draw(tEnemy, enemy.x, enemy.y);
-        }
-        bitmapFont.draw(batch,"Score : " + score, 20, Gdx.graphics.getHeight() - 20);// nisso aqui do Gdx.graphics eu estou pegando a altura e diminuindo por 20;
+
 
         batch.end();
     }
@@ -164,18 +183,27 @@ public class Main extends ApplicationAdapter {
 
     private void moveEnemy() {//controla o movimento/aparição dos inimigos e a logica de pontuação;
 
-        if (TimeUtils.nanoTime() - lastEnemyTime > 100000000 && enemies.size < Math.random()/2) {
+        if (TimeUtils.nanoTime() - lastEnemyTime > numEnemies && enemies.size < Math.random()/2) {
             this.spanwEnemyes();
         }
         for (Iterator<Rectangle> iter = enemies.iterator(); iter.hasNext(); ) {
             Rectangle enemy = iter.next();
             enemy.x -= 400 * Gdx.graphics.getDeltaTime();//isso controla a aparição dos inimigos;
 
-            if (collide(enemy.x, enemy.y, enemy.width, enemy.height, xMissile, yMissile, missile.getWidth(), missile.getHeight())){
+            //Colisão com o missil
+            if (collide(enemy.x, enemy.y, enemy.width, enemy.height, xMissile, yMissile, missile.getWidth(), missile.getHeight()) && attack){
              ++score;
                 attack = false;
                 iter.remove();
-            }else if (collide(enemy.x, enemy.y, enemy.width, enemy.height,posX, posY, nave.getWidth(),nave.getHeight())){
+                if (score % 10 == 0 ){// esse if aqui e para almentar o numero de inimigos conforme a ponutuação;
+                    numEnemies -=100;
+                }
+                //Colisão com a nave
+            }else if (collide(enemy.x, enemy.y, enemy.width, enemy.height,posX, posY, nave.getWidth(),nave.getHeight()) && !gameOver){
+                power --;
+                if (power <= 0){
+                    gameOver = true;
+                }
                 iter.remove();// iter, aqui e o iterador que contem os retangulos que são os nossos inimigos;
             }
 
