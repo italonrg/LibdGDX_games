@@ -44,8 +44,8 @@ public class Main extends ApplicationAdapter {
     @Override
     public void create() {
         batch = new SpriteBatch();
-        image = new Texture("bg01.jpg");//fundo
-        tNave = new Texture("spaceship.png");//nave
+        image = new Texture("bg01X.jpg");//fundo
+        tNave = new Texture("F16x.png");//nave
         tMissile = new Texture("missile.png");// missil
         posX = 255;
         posY = 125;
